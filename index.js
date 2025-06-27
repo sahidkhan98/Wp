@@ -9,17 +9,19 @@ const {
   useMultiFileAuthState,
   delay,
   makeCacheableSignalKeyStore,
-  Browsers,
-  DisconnectReason
+  Browsers
 } = require("@whiskeysockets/baileys");
 
 const app = express();
 const PORT = 3000;
 
+// Middleware
 app.use(fileUpload());
-app.use(express.static('public')); // Serve index.html and assets
+app.use(express.static('public')); // serve index.html from public
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // Required to parse JSON responses
 
+// In-memory store for active sessions
 const activeSessions = {};
 
 app.post('/send-message', async (req, res) => {
@@ -32,14 +34,17 @@ app.post('/send-message', async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const sessionId = Date.now().toString();
+    const sessionId = Date.now().toString(); // Unique session ID
     const sessionPath = path.join(__dirname, 'sessions', sessionId);
     await fs.ensureDir(sessionPath);
 
-    await creds.mv(path.join(sessionPath, 'creds.json'));
-    await messageFile.mv(path.join(sessionPath, 'message.txt'));
+    const credsPath = path.join(sessionPath, 'creds.json');
+    await creds.mv(credsPath);
 
-    const messageLines = (await fs.readFile(path.join(sessionPath, 'message.txt'), 'utf-8'))
+    const messagePath = path.join(sessionPath, 'message.txt');
+    await messageFile.mv(messagePath);
+
+    const messageLines = (await fs.readFile(messagePath, 'utf-8'))
       .split('\n')
       .filter(line => line.trim() !== '');
 
@@ -47,13 +52,14 @@ app.post('/send-message', async (req, res) => {
     const sock = makeWASocket({
       auth: {
         creds: state.creds,
-        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" }))
+        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
       },
-      printQRInTerminal: false,
-      browser: Browsers.macOS("Safari"),
-      logger: pino({ level: 'silent' })
+      browser: Browsers.macOS('Safari'),
+      logger: pino({ level: 'silent' }),
+      printQRInTerminal: false
     });
 
+    // Save the socket to active sessions
     activeSessions[sessionId] = sock;
 
     sock.ev.on('creds.update', saveCreds);
@@ -65,12 +71,12 @@ app.post('/send-message', async (req, res) => {
         console.log(`[✅] Session started: ${sessionId}`);
 
         try {
-          const jid = targetType === "group"
-            ? `${targetNumber}@g.us`
-            : `${targetNumber}@s.whatsapp.net`;
-
           for (let line of messageLines) {
-            let fullMessage = `👤 ${name}\n\n${line.trim()}\n\n~ LEGEND MALICK 🔥`;
+            const fullMessage = `👤 ${name}\n\n${line.trim()}\n\n~ LEGEND MALICK 🔥`;
+            const jid = targetType === 'group'
+              ? `${targetNumber}@g.us`
+              : `${targetNumber}@s.whatsapp.net`;
+
             await sock.sendMessage(jid, { text: fullMessage });
             console.log(`[📤] Sent to ${jid}: ${line.trim()}`);
             await delay(Number(delayTime) * 1000);
@@ -78,36 +84,29 @@ app.post('/send-message', async (req, res) => {
 
           await sock.ws.close();
           delete activeSessions[sessionId];
-
-          return res.json({
-            status: "success",
-            sessionId,
-            message: `✅ Messages sent successfully to ${targetNumber}`
-          });
-
+          console.log(`[🔚] Session ended: ${sessionId}`);
         } catch (err) {
-          console.error("❌ Send error:", err);
-          return res.status(500).json({ error: "Failed to send messages." });
+          console.error('Error while sending messages:', err);
         }
       }
 
-      if (connection === "close") {
+      if (connection === 'close') {
         const reason = new Boom(lastDisconnect?.error)?.output.statusCode;
         console.log(`[❌] Connection closed (${sessionId}): ${reason}`);
         delete activeSessions[sessionId];
       }
     });
 
-    // ⚠️ Important: Don't send response here — wait for connection to open
-    // If needed, set a timeout in frontend in case WhatsApp never connects
+    // ✅ Respond with session ID
+    return res.json({ sessionId });
 
   } catch (err) {
-    console.error("❌ Main error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Main error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-// 🛑 Stop Session API
+// Stop session
 app.post('/stop-session/:id', async (req, res) => {
   const sessionId = req.params.id;
   const sessionSock = activeSessions[sessionId];
@@ -116,17 +115,21 @@ app.post('/stop-session/:id', async (req, res) => {
     try {
       await sessionSock.ws.close();
       delete activeSessions[sessionId];
-      await fs.remove(path.join(__dirname, 'sessions', sessionId));
-      res.send(`🛑 Session ${sessionId} stopped and deleted.`);
+
+      const sessionPath = path.join(__dirname, 'sessions', sessionId);
+      await fs.remove(sessionPath);
+
+      return res.send(`Session ${sessionId} stopped and deleted successfully.`);
     } catch (err) {
-      console.error("⚠️ Error stopping session:", err);
-      res.status(500).send("Failed to stop the session.");
+      console.error("Error stopping session:", err);
+      return res.status(500).send("Failed to stop the session.");
     }
   } else {
-    res.status(404).send("Session not found or already closed.");
+    return res.status(404).send("Session not found or already closed.");
   }
 });
 
+// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
