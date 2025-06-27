@@ -1,161 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEGEND MALICK WHATSAPP LOADER</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.css">
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            line-height: 1.6;
-        }
-        header {
-            b* Primary color */
-            color: #fff;
-            padding: 20px 0;
-            text-align: center;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            margin: 0 0 15px;
-        }
-        h2 {
-            margin-bottom: 20px;
-        }
-        form {
-            background: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-            margin: 20px auto;
-            max-width: 700px;
-            display: none; /* Hide forms initially */
-            transition: all 0.3s;
-        }
-        .btn-custom {
-            background-color: #007bff; /* Primary color */
-            color: white;
-            text-transform: uppercase;
-            border-radius: 25px;
-            padding: 10px 20px;
-            margin: 10px 0;
-            transition: background-color 0.3s, box-shadow 0.3s;
-        }
-        .btn-custom:hover {
-            background-color: #0056b3; /* Darker shade */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-        .form-control, .form-control-file {
-            border-radius: 5px;
-            border: 1px solid #ced4da;
-            transition: border-color 0.3s;
-            margin-bottom: 15px; /* Add space between inputs */
-        }
-        .form-control:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-        }
-        .file-name {
-            font-size: 0.9rem;
-            color: #6c757d;
-            margin-bottom: 15px;
-        }
-        @media (max-width: 768px) {
-            form {
-                padding: 20px;
-            }
-        }
-        h4{
-            font-size: 13px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LEGEND MALICK WHATSAPP LOADER</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.css"/>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    header {
+      background: #007bff;
+      color: #fff;
+      padding: 20px 0;
+      text-align: center;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    form {
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      margin: 20px auto;
+      max-width: 700px;
+      display: none;
+    }
+    .btn-custom {
+      background-color: #007bff;
+      color: white;
+      border-radius: 25px;
+      padding: 10px 20px;
+    }
+    .btn-custom:hover {
+      background-color: #0056b3;
+    }
+    .file-name {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 15px;
+    }
+  </style>
 </head>
 <body>
 
-    <header>
-        <h1>LEGEND MALICK WHATSAPP SERVER</h1>
-        <button id="startSessionBtn" class="btn btn-custom">Start Messaging</button>
-        <button id="stopSessionBtn" class="btn btn-custom">Stop Messaging</button>
-    </header>
+<header>
+  <h1>LEGEND MALICK WHATSAPP SERVER</h1>
+  <button id="startSessionBtn" class="btn btn-custom">Start Messaging</button>
+  <button id="stopSessionBtn" class="btn btn-custom">Stop Messaging</button>
+</header>
 
-    <form id="sessionForm">
-        <h2 class="text-center">OFFLINE WHATSAPP CHAT </h2>
-        <input type="text" class="form-control" name="name" placeholder="Your Name" required>
-        <input type="text" class="form-control" name="targetNumber" placeholder="Target Phone Number" required>
-        <select class="form-control" name="targetType" required>
-            <option value="">Select Target Type</option>
-            <option value="single">contact</option>
-            <option value="group">Group</option>
-        </select>
-        <h4>input creds.json</h4>
-        <input type="file" class="form-control-file" name="creds" accept=".json" required onchange="updateFileName(this)">
-        
-        <div class="file-name" id="credsFileName">No file chosen</div>
-        <h4>input message file path</h4>
-        <input type="file" class="form-control-file" name="messageFile" accept=".txt" required onchange="updateFileName(this)">
-        <div class="file-name" id="messageFileName">No file chosen</div>
-        <input type="number" class="form-control" name="delayTime" placeholder="Delay Time (seconds)" required>
-        <button type="submit" class="btn btn-custom btn-block">Start Session</button>
-    </form>
+<form id="sessionForm">
+  <h2 class="text-center">Offline WhatsApp Chat</h2>
+  <input type="text" class="form-control" name="name" placeholder="Your Name" required />
+  <input type="text" class="form-control" name="targetNumber" placeholder="Target Phone Number" required />
+  <select class="form-control" name="targetType" required>
+    <option value="">Select Target Type</option>
+    <option value="single">Contact</option>
+    <option value="group">Group</option>
+  </select>
+  <h4>Input creds.json</h4>
+  <input type="file" class="form-control-file" name="creds" accept=".json" required onchange="updateFileName(this)">
+  <div class="file-name" id="credsFileName">No file chosen</div>
+  <h4>Input message file (.txt)</h4>
+  <input type="file" class="form-control-file" name="messageFile" accept=".txt" required onchange="updateFileName(this)">
+  <div class="file-name" id="messageFileName">No file chosen</div>
+  <input type="number" class="form-control" name="delayTime" placeholder="Delay Time (seconds)" required />
 
-    <form id="stopSessionForm">
-        <h2 class="text-center">Stop Session</h2>
-        <input type="text" class="form-control" name="sessionId" placeholder="Session ID" required>
-        <button type="submit" class="btn btn-danger btn-block">Stop Session</button>
-    </form>
+  <!-- SESSION ID SHOWN HERE -->
+  <div id="sessionInfo" style="display:none; margin-top:15px;" class="alert alert-success text-left">
+    <strong>Session ID:</strong> <span id="sessionIdText"></span>
+    <button class="btn btn-sm btn-outline-primary float-right" type="button" onclick="copySessionId()">Copy</button>
+  </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
-    <script>
-        document.getElementById('startSessionBtn').onclick = function() {
-            document.getElementById('sessionForm').style.display = 'block';
-            document.getElementById('stopSessionForm').style.display = 'none';
-        };
+  <button type="submit" class="btn btn-custom btn-block">Start Session</button>
+</form>
 
-        document.getElementById('stopSessionBtn').onclick = function() {
-            document.getElementById('stopSessionForm').style.display = 'block';
-            document.getElementById('sessionForm').style.display = 'none';
-        };
+<form id="stopSessionForm">
+  <h2 class="text-center">Stop Session</h2>
+  <input type="text" class="form-control" name="sessionId" placeholder="Session ID" required />
+  <button type="submit" class="btn btn-danger btn-block">Stop Session</button>
+</form>
 
-        document.getElementById('sessionForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            try {
-                const response = await fetch('/send-message', {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await response.text();
-                swal("Success", result, "success");
-            } catch (error) {
-                swal("Error", "An error occurred while starting the session.", "error");
-            }
-        });
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+<script>
+  document.getElementById('startSessionBtn').onclick = function () {
+    document.getElementById('sessionForm').style.display = 'block';
+    document.getElementById('stopSessionForm').style.display = 'none';
+  };
 
-        document.getElementById('stopSessionForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const sessionId = this.sessionId.value;
-            try {
-                const response = await fetch(`/stop-session/${sessionId}`, {
-                    method: 'POST'
-                });
-                const result = await response.text();
-                swal("Success", result, "success");
-            } catch (error) {
-                swal("Error", "An error occurred while stopping the session.", "error");
-            }
-        });
+  document.getElementById('stopSessionBtn').onclick = function () {
+    document.getElementById('stopSessionForm').style.display = 'block';
+    document.getElementById('sessionForm').style.display = 'none';
+  };
 
-        function updateFileName(input) {
-            const fileName = input.files[0] ? input.files[0].name : 'No file chosen';
-            const id = input.name === 'creds' ? 'credsFileName' : 'messageFileName';
-            document.getElementById(id).textContent = fileName;
-        }
-    </script>
+  document.getElementById('sessionForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    try {
+      const response = await fetch('/send-message', {
+        method: 'POST',
+        body: formData
+      });
+      const result = await response.json();
+
+      document.getElementById('sessionInfo').style.display = 'block';
+      document.getElementById('sessionIdText').innerText = result.sessionId;
+
+      swal("✅ Success", result.message, "success");
+    } catch (error) {
+      swal("Error", "An error occurred while starting the session.", "error");
+    }
+  });
+
+  document.getElementById('stopSessionForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const sessionId = this.sessionId.value;
+    try {
+      const response = await fetch(`/stop-session/${sessionId}`, { method: 'POST' });
+      const result = await response.text();
+      swal("Success", result, "success");
+    } catch (error) {
+      swal("Error", "An error occurred while stopping the session.", "error");
+    }
+  });
+
+  function updateFileName(input) {
+    const fileName = input.files[0] ? input.files[0].name : 'No file chosen';
+    const id = input.name === 'creds' ? 'credsFileName' : 'messageFileName';
+    document.getElementById(id).textContent = fileName;
+  }
+
+  function copySessionId() {
+    const sessionId = document.getElementById("sessionIdText").innerText;
+    navigator.clipboard.writeText(sessionId).then(() => {
+      swal("Copied!", "Session ID copied to clipboard!", "success");
+    });
+  }
+</script>
 </body>
 </html>
