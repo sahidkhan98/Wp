@@ -1,104 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LEGEND MALICK - WhatsApp Loader</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.6.2/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css" />
-  <style>
-    body {
-      background-color: #111;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
-      padding: 30px;
-    }
-    .container {
-      max-width: 700px;
-      background: #1e1e1e;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #00f2ff;
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 30px;
-      color: #00f2ff;
-    }
-    .form-control, .form-control-file, .custom-select {
-      margin-bottom: 15px;
-    }
-    .btn-primary {
-      background: linear-gradient(to right, #007bff, #00f2ff);
-      border: none;
-    }
-    .btn-primary:hover {
-      background: linear-gradient(to right, #00f2ff, #007bff);
-    }
-    footer {
-      margin-top: 50px;
-      text-align: center;
-      font-size: 14px;
-      color: #aaa;
-    }
-    footer img {
-      height: 24px;
-      margin: 0 5px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGEND MALICK WHATSAPP LOADER</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+        }
+        header {
+            b* Primary color */
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0 0 15px;
+        }
+        h2 {
+            margin-bottom: 20px;
+        }
+        form {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            margin: 20px auto;
+            max-width: 700px;
+            display: none; /* Hide forms initially */
+            transition: all 0.3s;
+        }
+        .btn-custom {
+            background-color: #007bff; /* Primary color */
+            color: white;
+            text-transform: uppercase;
+            border-radius: 25px;
+            padding: 10px 20px;
+            margin: 10px 0;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        .btn-custom:hover {
+            background-color: #0056b3; /* Darker shade */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        .form-control, .form-control-file {
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            transition: border-color 0.3s;
+            margin-bottom: 15px; /* Add space between inputs */
+        }
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+        .file-name {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+        @media (max-width: 768px) {
+            form {
+                padding: 20px;
+            }
+        }
+        h4{
+            font-size: 13px;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="container">
-    <h2>LEGEND MALICK - WhatsApp Message Sender</h2>
-    <form id="messageForm">
-      <input type="text" class="form-control" name="name" placeholder="Your Name (Hatersname)" required />
-      <input type="text" class="form-control" name="targetNumber" placeholder="Target Number (e.g. 919876543210)" required />
-      
-      <select class="custom-select" name="targetType" required>
-        <option value="">Select Target Type</option>
-        <option value="single">Single Contact</option>
-        <option value="group">Group Chat</option>
-      </select>
+    <header>
+        <h1>LEGEND MALICK WHATSAPP SERVER</h1>
+        <button id="startSessionBtn" class="btn btn-custom">Start Messaging</button>
+        <button id="stopSessionBtn" class="btn btn-custom">Stop Messaging</button>
+    </header>
 
-      <label style="margin-top:10px;">Upload creds.json file</label>
-      <input type="file" class="form-control-file" name="creds" accept=".json" required />
-
-      <label style="margin-top:10px;">Upload message.txt file</label>
-      <input type="file" class="form-control-file" name="messageFile" accept=".txt" required />
-
-      <input type="number" class="form-control" name="delayTime" placeholder="Delay (in seconds)" required />
-
-      <button type="submit" class="btn btn-primary btn-block mt-3">Start Sending</button>
+    <form id="sessionForm">
+        <h2 class="text-center">OFFLINE WHATSAPP CHAT </h2>
+        <input type="text" class="form-control" name="name" placeholder="Your Name" required>
+        <input type="text" class="form-control" name="targetNumber" placeholder="Target Phone Number" required>
+        <select class="form-control" name="targetType" required>
+            <option value="">Select Target Type</option>
+            <option value="single">contact</option>
+            <option value="group">Group</option>
+        </select>
+        <h4>input creds.json</h4>
+        <input type="file" class="form-control-file" name="creds" accept=".json" required onchange="updateFileName(this)">
+        
+        <div class="file-name" id="credsFileName">No file chosen</div>
+        <h4>input message file path</h4>
+        <input type="file" class="form-control-file" name="messageFile" accept=".txt" required onchange="updateFileName(this)">
+        <div class="file-name" id="messageFileName">No file chosen</div>
+        <input type="number" class="form-control" name="delayTime" placeholder="Delay Time (seconds)" required>
+        <button type="submit" class="btn btn-custom btn-block">Start Session</button>
     </form>
-  </div>
 
-  <footer>
-    Developed by <strong>Legend Malick</strong><br/>
-    <a href="https://github.com/GuhailTechInfo" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="GitHub" /></a>
-    <a href="https://facebook.com" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/124/124010.png" alt="Facebook" /></a>
-  </footer>
+    <form id="stopSessionForm">
+        <h2 class="text-center">Stop Session</h2>
+        <input type="text" class="form-control" name="sessionId" placeholder="Session ID" required>
+        <button type="submit" class="btn btn-danger btn-block">Stop Session</button>
+    </form>
 
-  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
-  <script>
-    $('#messageForm').on('submit', async function (e) {
-      e.preventDefault();
-      const formData = new FormData(this);
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+    <script>
+        document.getElementById('startSessionBtn').onclick = function() {
+            document.getElementById('sessionForm').style.display = 'block';
+            document.getElementById('stopSessionForm').style.display = 'none';
+        };
 
-      try {
-        const response = await fetch('/send-message', {
-          method: 'POST',
-          body: formData
+        document.getElementById('stopSessionBtn').onclick = function() {
+            document.getElementById('stopSessionForm').style.display = 'block';
+            document.getElementById('sessionForm').style.display = 'none';
+        };
+
+        document.getElementById('sessionForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            try {
+                const response = await fetch('/send-message', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.text();
+                swal("Success", result, "success");
+            } catch (error) {
+                swal("Error", "An error occurred while starting the session.", "error");
+            }
         });
 
-        const result = await response.text();
-        swal("✅ Success", result, "success");
-      } catch (error) {
-        swal("❌ Error", "Something went wrong!", "error");
-        console.error(error);
-      }
-    });
-  </script>
+        document.getElementById('stopSessionForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const sessionId = this.sessionId.value;
+            try {
+                const response = await fetch(`/stop-session/${sessionId}`, {
+                    method: 'POST'
+                });
+                const result = await response.text();
+                swal("Success", result, "success");
+            } catch (error) {
+                swal("Error", "An error occurred while stopping the session.", "error");
+            }
+        });
+
+        function updateFileName(input) {
+            const fileName = input.files[0] ? input.files[0].name : 'No file chosen';
+            const id = input.name === 'creds' ? 'credsFileName' : 'messageFileName';
+            document.getElementById(id).textContent = fileName;
+        }
+    </script>
 </body>
 </html>
