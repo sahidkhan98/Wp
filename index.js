@@ -1,113 +1,113 @@
-const express = require("express");
-const fs = require("fs-extra");
-const fileUpload = require("express-fileupload");
-const path = require("path");
-const pino = require("pino");
-const { Boom } = require("@hapi/boom");
-const {
+const express = require('express');
+const fileUpload = require('express-fileupload');
+const fs = require('fs-extra');
+const path = require('path');
+const pino = require('pino');
+const { Boom } = require('@hapi/boom');
+const { 
   default: makeWASocket,
   useMultiFileAuthState,
   makeCacheableSignalKeyStore,
-  Browsers,
+  fetchLatestBaileysVersion,
+  DisconnectReason,
   delay
-} = require("@whiskeysockets/baileys");
+} = require('@whiskeysockets/baileys');
 
 const app = express();
 const PORT = 3000;
 
-app.use(express.static("public"));
+app.use(express.static('public'));
 app.use(fileUpload());
 
-const sessions = {}; // Session store
+const sessions = {}; // Session map
 
-// API to send message from creds.json and message file
-app.post("/send-message", async (req, res) => {
+// Send messages from creds + file
+app.post('/send-message', async (req, res) => {
   try {
-    const name = req.body.name;
-    const number = req.body.targetNumber;
-    const delayTime = parseInt(req.body.delayTime) * 1000;
-    const targetType = req.body.targetType;
-
-    const credsFile = req.files.creds;
-    const messageFile = req.files.messageFile;
-
-    const sessionId = Date.now().toString();
-    const sessionPath = path.join(__dirname, "sessions", sessionId);
+    const { name, targetNumber, targetType, delayTime } = req.body;
+    const sessionId = `${Date.now()}`;
+    const sessionPath = path.join(__dirname, 'sessions', sessionId);
     await fs.ensureDir(sessionPath);
 
+    const credsPath = path.join(sessionPath, 'creds.json');
+    const messagePath = path.join(sessionPath, 'message.txt');
+
+    if (!req.files || !req.files.creds || !req.files.messageFile) {
+      return res.status(400).send('Missing files.');
+    }
+
     // Save creds.json
-    const authPath = path.join(sessionPath, "auth_info_baileys");
-    await fs.ensureDir(authPath);
-    await fs.writeFile(path.join(authPath, "creds.json"), credsFile.data);
+    await req.files.creds.mv(credsPath);
 
-    // Save messages
-    const messages = messageFile.data.toString().split(/\r?\n/).filter(line => line.trim() !== "");
+    // Save message file
+    await req.files.messageFile.mv(messagePath);
 
-    const { state, saveCreds } = await useMultiFileAuthState(authPath);
+    const messageLines = (await fs.readFile(messagePath, 'utf-8'))
+      .split('\n')
+      .filter(Boolean);
+
+    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 
     const sock = makeWASocket({
+      version: await fetchLatestBaileysVersion().then(v => v.version),
       auth: {
         creds: state.creds,
-        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" }))
+        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
       },
       printQRInTerminal: false,
-      browser: Browsers.macOS("Safari"),
-      logger: pino({ level: "silent" })
+      logger: pino({ level: 'silent' })
     });
 
-    sock.ev.on("creds.update", saveCreds);
+    sock.ev.on('creds.update', saveCreds);
 
-    sock.ev.on("connection.update", (update) => {
-      const { connection } = update;
-      if (connection === "close") {
-        console.log(`Session ${sessionId} disconnected.`);
-        delete sessions[sessionId];
-      }
-    });
-
-    sessions[sessionId] = sock;
-
-    (async () => {
-      for (let i = 0; i < messages.length; i++) {
-        const fullMsg = `*${name}:* ${messages[i]}`;
-        const jid = targetType === "group" ? `${number}@g.us` : `${number}@s.whatsapp.net`;
-
-        try {
-          await sock.sendMessage(jid, { text: fullMsg });
-          console.log(`[Sent] ${fullMsg}`);
-          await delay(delayTime);
-        } catch (err) {
-          console.error("Error sending message:", err.message || err);
+    sock.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
+      if (connection === 'close') {
+        const reason = new Boom(lastDisconnect?.error).output.statusCode;
+        if (reason === DisconnectReason.loggedOut) {
+          await fs.remove(sessionPath);
         }
       }
-    })();
+    });
 
-    res.send(`Session started: ${sessionId}`);
+    sock.ev.on('messages.upsert', m => {}); // Placeholder
+
+    await delay(5000);
+
+    const jid = targetType === 'group' ? `${targetNumber}@g.us` : `${targetNumber}@s.whatsapp.net`;
+
+    for (const line of messageLines) {
+      const finalMessage = `*${name}:* ${line.trim()}`;
+      await sock.sendMessage(jid, { text: finalMessage });
+      await delay(parseInt(delayTime) * 1000);
+    }
+
+    sessions[sessionId] = sock;
+    return res.send(`Message sent successfully. Your session ID: ${sessionId}`);
+
   } catch (err) {
     console.error("Error in send-message:", err);
-    res.status(500).send("Something went wrong.");
+    return res.status(500).send("Internal Server Error. Check console.");
   }
 });
 
-// API to stop a session by ID
-app.post("/stop-session/:id", async (req, res) => {
-  const sessionId = req.params.id;
-  const session = sessions[sessionId];
-
+// Stop session
+app.post('/stop-session/:id', async (req, res) => {
+  const id = req.params.id;
+  const session = sessions[id];
   if (session) {
     try {
-      await session.ws.close();
-      delete sessions[sessionId];
-      res.send("Session stopped successfully.");
-    } catch (err) {
-      console.error("Error stopping session:", err);
-      res.status(500).send("Failed to stop session.");
+      await session.logout();
+      delete sessions[id];
+      res.send('Session stopped successfully.');
+    } catch (e) {
+      res.status(500).send('Failed to stop session.');
     }
   } else {
-    res.status(404).send("Session not found.");
+    res.status(404).send('Session not found.');
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
+    
