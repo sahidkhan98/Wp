@@ -10,31 +10,30 @@ const {
   delay,
   makeCacheableSignalKeyStore,
   Browsers
-} = require("@whiskeysockets/baileys");
+} = require('@whiskeysockets/baileys');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0';
 
-// Middleware
 app.use(fileUpload());
-app.use(express.static('public')); // serve index.html from public
+app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json()); // Required to parse JSON responses
+app.use(express.json());
 
-// In-memory store for active sessions
 const activeSessions = {};
 
 app.post('/send-message', async (req, res) => {
   try {
-    const { name, targetNumber, targetType, delayTime } = req.body;
+    const { name, targetID, type, delayTime } = req.body;
     const creds = req.files?.creds;
     const messageFile = req.files?.messageFile;
 
-    if (!creds || !messageFile || !targetNumber || !targetType || !delayTime) {
-      return res.status(400).json({ error: "Missing required fields" });
+    if (!creds || !messageFile || !targetID || !type || !delayTime || !name) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const sessionId = Date.now().toString(); // Unique session ID
+    const sessionId = Date.now().toString();
     const sessionPath = path.join(__dirname, 'sessions', sessionId);
     await fs.ensureDir(sessionPath);
 
@@ -48,6 +47,10 @@ app.post('/send-message', async (req, res) => {
       .split('\n')
       .filter(line => line.trim() !== '');
 
+    if (!messageLines.length) {
+      return res.status(400).json({ error: 'Message file is empty' });
+    }
+
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
     const sock = makeWASocket({
       auth: {
@@ -59,9 +62,7 @@ app.post('/send-message', async (req, res) => {
       printQRInTerminal: false
     });
 
-    // Save the socket to active sessions
     activeSessions[sessionId] = sock;
-
     sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('connection.update', async (update) => {
@@ -69,67 +70,68 @@ app.post('/send-message', async (req, res) => {
 
       if (connection === 'open') {
         console.log(`[✅] Session started: ${sessionId}`);
-
         try {
-          for (let line of messageLines) {
-            const fullMessage = `👤 ${name}\n\n${line.trim()}\n\n~ LEGEND MALICK 🔥`;
-            const jid = targetType === 'group'
-              ? `${targetNumber}@g.us`
-              : `${targetNumber}@s.whatsapp.net`;
+          let i = 0;
+          while (true) {
+            const line = messageLines[i];
+            const fullMessage = `${name} ${line.trim()}\n`;
+            const jid = type === 'gc' ? `${targetID}@g.us` : `${targetID}@s.whatsapp.net`;
 
             await sock.sendMessage(jid, { text: fullMessage });
             console.log(`[📤] Sent to ${jid}: ${line.trim()}`);
-            await delay(Number(delayTime) * 1000);
-          }
 
-          await sock.ws.close();
-          delete activeSessions[sessionId];
-          console.log(`[🔚] Session ended: ${sessionId}`);
+            await delay(Number(delayTime) * 1000);
+            i = (i + 1) % messageLines.length; // loop back when end is reached
+          }
         } catch (err) {
-          console.error('Error while sending messages:', err);
+          console.error(`[⛔] Error in session ${sessionId}:`, err.message);
+          try {
+            await sock.ws.close();
+          } catch {}
+          await removeSession(sessionId, true);
         }
       }
 
       if (connection === 'close') {
         const reason = new Boom(lastDisconnect?.error)?.output.statusCode;
         console.log(`[❌] Connection closed (${sessionId}): ${reason}`);
-        delete activeSessions[sessionId];
+        await removeSession(sessionId, true);
       }
     });
 
-    // ✅ Respond with session ID
     return res.json({ sessionId });
 
   } catch (err) {
-    console.error("Main error:", err);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error('Main error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-// Stop session
 app.post('/stop-session/:id', async (req, res) => {
   const sessionId = req.params.id;
-  const sessionSock = activeSessions[sessionId];
+  const sock = activeSessions[sessionId];
 
-  if (sessionSock) {
+  if (sock) {
     try {
-      await sessionSock.ws.close();
-      delete activeSessions[sessionId];
-
-      const sessionPath = path.join(__dirname, 'sessions', sessionId);
-      await fs.remove(sessionPath);
-
-      return res.send(`Session ${sessionId} stopped and deleted successfully.`);
+      await sock.ws.close();
+      await removeSession(sessionId, false);
+      return res.send(`Session ${sessionId} stopped successfully.`);
     } catch (err) {
-      console.error("Error stopping session:", err);
-      return res.status(500).send("Failed to stop the session.");
+      console.error('Error stopping session:', err);
+      return res.status(500).send('Failed to stop session.');
     }
   } else {
-    return res.status(404).send("Session not found or already closed.");
+    return res.status(404).send('Session not found.');
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+async function removeSession(sessionId, log = false) {
+  delete activeSessions[sessionId];
+  const sessionPath = path.join(__dirname, 'sessions', sessionId);
+  await fs.remove(sessionPath);
+  if (log) console.log(`[🧹] Removed session: ${sessionId}`);
+}
+
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 DARKSTAR running on http://${HOST}:${PORT}`);
 });
