@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Darkstar WhatsApp Loader 2</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.css"/>
+  <style>
+    body {
+      background: #0f172a;
+      color: #f1f5f9;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    header {
+      background: #1e293b;
+      padding: 20px;
+      text-align: center;
+      border-bottom: 2px solid #334155;
+    }
+
+    header h2 {
+      margin-bottom: 10px;
+    }
+
+    form {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #334155;
+      margin: 30px auto;
+      max-width: 700px;
+    }
+
+    .form-control, .form-control-file {
+      margin-bottom: 15px;
+      background: #0f172a;
+      color: #f1f5f9;
+      border: 1px solid #334155;
+    }
+
+    .btn-custom {
+      background: #3b82f6;
+      color: white;
+      border-radius: 25px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-custom:hover {
+      background: #2563eb;
+    }
+
+    .btn-danger {
+      border-radius: 25px;
+    }
+
+    #sessionDisplay {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+      color: #22c55e;
+    }
+
+    footer {
+      background: #1e293b;
+      color: #9ca3af;
+      text-align: center;
+      padding: 15px;
+    }
+
+    .social-icons a {
+      margin: 0 10px;
+      color: #9ca3af;
+      font-size: 20px;
+      transition: color 0.3s ease;
+    }
+
+    .social-icons a:hover {
+      color: #22d3ee;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2> DARKSTAR - WHATSAPP SERVER </h2>
+    <button id="startSessionBtn" class="btn btn-custom">Start Messaging</button>
+    <button id="stopSessionBtn" class="btn btn-danger">Stop Messaging</button>
+  </header>
+
+  <form id="sessionForm" style="display:none;">
+    <input type="text" class="form-control" name="name" placeholder="Sender Name" required>
+    
+    <select class="form-control" name="type" required>
+      <option value="">Select Target Type</option>
+      <option value="single">Contact</option>
+      <option value="gc">Group</option>
+    </select>
+    
+    <input type="text" class="form-control" name="targetID" placeholder="Target Number or Group ID" required>
+
+    <label class="text-light">Upload <b>creds.json</b></label>
+    <input type="file" class="form-control-file" name="creds" accept=".json" required>
+
+    <label class="text-light">Upload <b>message.txt</b></label>
+    <input type="file" class="form-control-file" name="messageFile" accept=".txt" required>
+
+    <input type="number" class="form-control" name="delayTime" placeholder="Delay (seconds)" required>
+
+    <button type="submit" class="btn btn-custom btn-block">Start</button>
+    <div id="sessionDisplay"></div>
+  </form>
+
+  <form id="stopSessionForm" style="display:none;">
+    <input type="text" class="form-control" name="sessionId" placeholder="Session ID" required>
+    <button type="submit" class="btn btn-danger btn-block">Stop Session</button>
+  </form>
+
+  <footer>
+    <div class="social-icons">
+      <a href="https://github.com/Darkstar-xd" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>
+      <a href="https://www.facebook.com/smkh.198064" target="_blank" title="Facebook"><i class="fab fa-facebook"></i></a>
+    </div>
+    <p>© 2025 Developed by <strong>Sahiil Khan</strong></p>
+  </footer>
+
+  <!-- JS Libraries -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+
+  <!-- Logic -->
+  <script>
+    document.getElementById('startSessionBtn').onclick = () => {
+      document.getElementById('sessionForm').style.display = 'block';
+      document.getElementById('stopSessionForm').style.display = 'none';
+    };
+
+    document.getElementById('stopSessionBtn').onclick = () => {
+      document.getElementById('sessionForm').style.display = 'none';
+      document.getElementById('stopSessionForm').style.display = 'block';
+    };
+
+    document.getElementById('sessionForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+
+      try {
+        const res = await fetch('/send-message', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await res.json();
+
+        if (result.sessionId) {
+          swal("✅ Started", `Session ID: ${result.sessionId}`, "success");
+          document.getElementById('sessionDisplay').innerHTML =
+            `Session ID: <code>${result.sessionId}</code><br><small>Use this to stop the session below.</small>`;
+        } else {
+          swal("❌ Error", result.error || "Failed to start session", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        swal("❌ Error", "Something went wrong", "error");
+      }
+    });
+
+    document.getElementById('stopSessionForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const sessionId = this.sessionId.value.trim();
+
+      try {
+        const response = await fetch(`/stop-session/${sessionId}`, {
+          method: 'POST'
+        });
+
+        const result = await response.text();
+        swal("🛑 Stopped", result, "success");
+      } catch (err) {
+        console.error(err);
+        swal("❌ Error", "Failed to stop session", "error");
+      }
+    });
+  </script>
+</body>
+</html>
